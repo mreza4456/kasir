@@ -1,65 +1,226 @@
-import Image from "next/image";
+'use client'
 
-export default function Home() {
+import React, { useState, useEffect } from 'react'
+import { Product, CartItem } from '@/interface'
+import { ProductCard } from '@/components/product-card'
+import { Cart } from '@/components/carts'
+import { CheckoutDialog } from '@/components/checkout'
+import { ProductDialog } from '@/components/product-dialog'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { getProducts, deleteProduct } from '@/actions/products'
+import { Package, Search, Plus, Trash2, Edit, Loader2, LogOut } from 'lucide-react'
+import { toast } from 'sonner'
+import { logoutAction } from '@/actions/user'
+
+export default function CashierPage() {
+  const [products, setProducts] = useState<Product[]>([])
+  const [cart, setCart] = useState<CartItem[]>([])
+  const [searchQuery, setSearchQuery] = useState('')
+  const [showCheckout, setShowCheckout] = useState(false)
+  const [showProductDialog, setShowProductDialog] = useState(false)
+  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null)
+  const [loading, setLoading] = useState(true)
+
+  const [isLoggingOut, setIsLoggingOut] = React.useState(false)
+  const handleLogout = async () => {
+    try {
+      setIsLoggingOut(true)
+      await logoutAction()
+    } catch (error) {
+      console.error("Error logging out:", error)
+    } finally {
+      setIsLoggingOut(false)
+    }
+  }
+
+
+  const loadProducts = async () => {
+    setLoading(true)
+    const data = await getProducts()
+    setProducts(data)
+    setLoading(false)
+  }
+
+  useEffect(() => {
+    loadProducts()
+  }, [])
+
+  const filteredProducts = products.filter(product =>
+    product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    (product.categories?.name || '').toLowerCase().includes(searchQuery.toLowerCase())
+  )
+
+  const addToCart = (product: Product) => {
+    const existingItem = cart.find(item => item.product.id === product.id)
+
+    if (existingItem) {
+      if (existingItem.quantity >= product.stock) {
+        toast('Stok tidak mencukupi!')
+        return
+      }
+      setCart(cart.map(item =>
+        item.product.id === product.id
+          ? { ...item, quantity: item.quantity + 1 }
+          : item
+      ))
+    } else {
+      setCart([...cart, { product, quantity: 1 }])
+    }
+  }
+
+  const updateQuantity = (productId: string, newQuantity: number) => {
+    if (newQuantity <= 0) {
+      removeFromCart(productId)
+      return
+    }
+
+    setCart(cart.map(item =>
+      item.product.id === productId
+        ? { ...item, quantity: newQuantity }
+        : item
+    ))
+  }
+
+  const removeFromCart = (productId: string) => {
+    setCart(cart.filter(item => item.product.id !== productId))
+  }
+
+  const handleCheckout = () => {
+    if (cart.length === 0) {
+      toast('Keranjang masih kosong!')
+      return
+    }
+    setShowCheckout(true)
+  }
+
+  const handleCheckoutSuccess = () => {
+    setCart([])
+    loadProducts()
+  }
+
+  const handleAddProduct = () => {
+    setSelectedProduct(null)
+    setShowProductDialog(true)
+  }
+
+  const handleEditProduct = (product: Product) => {
+    setSelectedProduct(product)
+    setShowProductDialog(true)
+  }
+
+  const handleDeleteProduct = async (id: string) => {
+    if (!confirm('Apakah Anda yakin ingin menghapus produk ini?')) return
+
+    await deleteProduct(id)
+    loadProducts()
+  }
+
+
+
   return (
-    <div className="flex min-h-screen items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex min-h-screen w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
+    <div className="min-h-screen bg-gray-50">
+      {/* Header */}
+      <header className="bg-white border-b sticky top-0 z-10">
+        <div className="container mx-auto px-4 py-4">
+          <div className="flex items-center justify-between ">
+            <div className="flex items-center gap-2">
+              <Package className="h-8 w-8 text-primary" />
+              <h1 className="text-2xl font-bold">Aplikasi Kasir</h1>
+            </div>
+            <button
+              onClick={handleLogout}
+              disabled={isLoggingOut}
+              className="flex items-center space-x-2 px-3 py-2 text-red-400 hover:bg-red-500/10 rounded-lg transition-colors cursor-pointer"
             >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
+              {isLoggingOut ? (
+                <Loader2 className="w-4 h-4 animate-spin" />
+              ) : (
+                <LogOut className="w-4 h-4" />
+              )}
+              <span>{isLoggingOut ? 'Logging out...' : 'Logout'}</span>
+            </button>
+
+          </div>
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
+      </header>
+
+      {/* Main Content */}
+      <div className="container mx-auto px-4 py-6">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Products Section */}
+          <div className="lg:col-span-2 space-y-4">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Cari produk atau kategori..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-10"
+              />
+            </div>
+
+            {loading ? (
+              <div className="text-center py-12">
+                <p className="text-muted-foreground">Memuat produk...</p>
+              </div>
+            ) : filteredProducts.length === 0 ? (
+              <div className="text-center py-12">
+                <p className="text-muted-foreground">
+                  {searchQuery ? 'Produk tidak ditemukan' : 'Belum ada produk'}
+                </p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+                {filteredProducts.map((product) => (
+                  <div key={product.id} className="relative group">
+                    <ProductCard product={product} onAddToCart={addToCart} />
+                    <div className="absolute top-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <Button
+                        size="icon"
+                        variant="secondary"
+                        className="h-8 w-8"
+                        onClick={() => handleEditProduct(product)}
+                      >
+                        <Edit className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        size="icon"
+                        variant="destructive"
+                        className="h-8 w-8"
+                        onClick={() => handleDeleteProduct(product.id)}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Cart Section */}
+          <div className="lg:sticky lg:top-24 h-fit">
+            <Cart
+              items={cart}
+              onUpdateQuantity={updateQuantity}
+              onRemoveItem={removeFromCart}
+              onCheckout={handleCheckout}
             />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
+          </div>
         </div>
-      </main>
+      </div>
+
+      {/* Checkout Dialog */}
+      <CheckoutDialog
+        open={showCheckout}
+        onOpenChange={setShowCheckout}
+        items={cart}
+        onSuccess={handleCheckoutSuccess}
+      />
+
+      {/* Product Dialog */}
+
     </div>
-  );
+  )
 }
