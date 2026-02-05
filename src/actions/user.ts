@@ -239,7 +239,7 @@ export async function updateUser(userId: string, formData: FormData): Promise<Ac
     }
   }
 
-  const { data: currentUser } = await supabase
+  const { data: currentUser } = await supabaseAdmin
     .from('users')
     .select('role')
     .eq('auth_user_id', user.id)
@@ -262,7 +262,7 @@ export async function updateUser(userId: string, formData: FormData): Promise<Ac
     }
   }
 
-  const { error } = await supabase
+  const { error } = await supabaseAdmin
     .from('users')
     .update({
       full_name,
@@ -321,7 +321,7 @@ export async function deleteUser(userId: string, authUserId: string): Promise<Ac
   }
 
   // Delete from auth (this will cascade to users table)
-  const { error: authError } = await supabase.auth.admin.deleteUser(authUserId)
+  const { error: authError } = await supabaseAdmin.auth.admin.deleteUser(authUserId)
 
   if (authError) {
     return {

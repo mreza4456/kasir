@@ -18,6 +18,7 @@ import {
 } from "@/components/ui/select";
 import { User } from "@/actions/user";
 import { useState } from "react";
+import { Eye, EyeOff } from "lucide-react";
 
 interface UserDialogProps {
     open: boolean;
@@ -34,6 +35,7 @@ export function UserDialog({
 }: UserDialogProps) {
     const [loading, setLoading] = useState(false);
     const [role, setRole] = useState<string>(user?.role || "kasir");
+    const [showPassword, setShowPassword] = useState(false);
 
     const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
@@ -41,23 +43,19 @@ export function UserDialog({
 
         const formData = new FormData(e.currentTarget);
         
-        // Add role to formData since Select component doesn't add it automatically
         formData.set("role", role);
 
         try {
             let result;
             if (user) {
-                // Edit mode
                 result = await updateUser(user.id, formData);
             } else {
-                // Add mode
                 result = await createUser(formData);
             }
 
             if (result.success) {
                 onSuccess();
                 onOpenChange(false);
-                // Reset role to default
                 setRole("kasir");
             } else {
                 alert(`Gagal menyimpan user: ${result.message}`);
@@ -70,12 +68,12 @@ export function UserDialog({
         }
     };
 
-    // Reset role when dialog opens/closes
     const handleOpenChange = (open: boolean) => {
         if (open && user) {
             setRole(user.role);
         } else if (!open) {
             setRole("kasir");
+            setShowPassword(false);
         }
         onOpenChange(open);
     };
@@ -115,14 +113,30 @@ export function UserDialog({
 
                             <div className="space-y-2">
                                 <Label htmlFor="password">Password</Label>
-                                <Input
-                                    id="password"
-                                    name="password"
-                                    type="password"
-                                    placeholder="Minimal 6 karakter"
-                                    minLength={6}
-                                    required
-                                />
+                                <div className="relative">
+                                    <Input
+                                        id="password"
+                                        name="password"
+                                        type={showPassword ? "text" : "password"}
+                                        placeholder="Minimal 6 karakter"
+                                        minLength={6}
+                                        required
+                                        className="pr-10"
+                                    />
+                                    <Button
+                                        type="button"
+                                        variant="ghost"
+                                        size="sm"
+                                        className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
+                                        onClick={() => setShowPassword(!showPassword)}
+                                    >
+                                        {showPassword ? (
+                                            <EyeOff className="h-4 w-4 text-muted-foreground" />
+                                        ) : (
+                                            <Eye className="h-4 w-4 text-muted-foreground" />
+                                        )}
+                                    </Button>
+                                </div>
                             </div>
                         </>
                     )}
