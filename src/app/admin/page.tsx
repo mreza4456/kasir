@@ -8,7 +8,8 @@ import {
     ShoppingCart, 
     Package, 
     TrendingUp, 
-    DollarSign
+    DollarSign,
+    Percent
 } from "lucide-react"
 import { useEffect, useState } from "react"
 import { 
@@ -31,6 +32,8 @@ interface MonthlyData {
     month: string
     total: number
     transactions: number
+    totalPurchasePrice: number
+    margin: number
 }
 
 interface CategoryData {
@@ -78,16 +81,17 @@ export default function DashboardPage() {
     }
 
     const processMonthlyData = (transactions: Transaction[]) => {
-        const monthlyMap = new Map<string, { total: number; count: number }>()
+        const monthlyMap = new Map<string, { total: number; count: number; totalPurchasePrice: number }>()
         
         transactions.forEach(transaction => {
             const date = new Date(transaction.created_at)
             const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`
             
-            const existing = monthlyMap.get(monthKey) || { total: 0, count: 0 }
+            const existing = monthlyMap.get(monthKey) || { total: 0, count: 0, totalPurchasePrice: 0 }
             monthlyMap.set(monthKey, {
                 total: existing.total + transaction.total,
-                count: existing.count + 1
+                count: existing.count + 1,
+                totalPurchasePrice: existing.totalPurchasePrice + (transaction.total_purchase_price || 0)
             })
         })
 
@@ -96,13 +100,16 @@ export default function DashboardPage() {
             .slice(-6) // Last 6 months
             .map(([key, value]) => {
                 const date = new Date(key + '-01')
+                const margin = value.total - value.totalPurchasePrice
                 return {
                     month: new Intl.DateTimeFormat('id-ID', { 
                         month: 'short',
                         year: '2-digit'
                     }).format(date),
                     total: value.total,
-                    transactions: value.count
+                    transactions: value.count,
+                    totalPurchasePrice: value.totalPurchasePrice,
+                    margin: margin
                 }
             })
 
@@ -128,6 +135,9 @@ export default function DashboardPage() {
     }
 
     const totalRevenue = transactions.reduce((sum, t) => sum + t.total, 0)
+    const totalPurchasePrice = transactions.reduce((sum, t) => sum + (t.total_purchase_price || 0), 0)
+    const totalMargin = totalRevenue - totalPurchasePrice
+    const marginPercentage = totalRevenue > 0 ? (totalMargin / totalRevenue) * 100 : 0
     const totalTransactions = transactions.length
     const totalProducts = products.length
     const lowStockProducts = products.filter(p => (p.stock || 0) < 10).length
@@ -168,7 +178,7 @@ export default function DashboardPage() {
             </div>
 
             {/* Stats Cards */}
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+            <div className="grid gap-4 grid-cols-2 lg:grid-cols-4">
                 <Card>
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                         <CardTitle className="text-sm font-medium">
@@ -184,6 +194,54 @@ export default function DashboardPage() {
                     </CardContent>
                 </Card>
 
+                <Card>
+                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                        <CardTitle className="text-sm font-medium">
+                            Total Modal
+                        </CardTitle>
+                        <DollarSign className="h-4 w-4 text-muted-foreground" />
+                    </CardHeader>
+                    <CardContent>
+                        <div className="text-2xl font-bold">{formatCurrency(totalPurchasePrice)}</div>
+                        <p className="text-xs text-muted-foreground">
+                            Harga beli produk terjual
+                        </p>
+                    </CardContent>
+                </Card>
+
+                <Card>
+                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                        <CardTitle className="text-sm font-medium">
+                            Total Margin
+                        </CardTitle>
+                        <TrendingUp className="h-4 w-4 text-muted-foreground" />
+                    </CardHeader>
+                    <CardContent>
+                        <div className="text-2xl font-bold text-green-600">{formatCurrency(totalMargin)}</div>
+                        <p className="text-xs text-muted-foreground">
+                            Keuntungan bersih
+                        </p>
+                    </CardContent>
+                </Card>
+
+                <Card>
+                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                        <CardTitle className="text-sm font-medium">
+                            Margin %
+                        </CardTitle>
+                        <Percent className="h-4 w-4 text-muted-foreground" />
+                    </CardHeader>
+                    <CardContent>
+                        <div className="text-2xl font-bold text-green-600">{marginPercentage.toFixed(1)}%</div>
+                        <p className="text-xs text-muted-foreground">
+                            Persentase keuntungan
+                        </p>
+                    </CardContent>
+                </Card>
+            </div>
+
+            {/* Secondary Stats */}
+            <div className="grid gap-4 grid-cols-2 lg:grid-cols-4">
                 <Card>
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                         <CardTitle className="text-sm font-medium">
@@ -228,14 +286,31 @@ export default function DashboardPage() {
                         </p>
                     </CardContent>
                 </Card>
+
+                <Card>
+                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                        <CardTitle className="text-sm font-medium">
+                            Rata-rata Transaksi
+                        </CardTitle>
+                        <DollarSign className="h-4 w-4 text-muted-foreground" />
+                    </CardHeader>
+                    <CardContent>
+                        <div className="text-2xl font-bold">
+                            {formatCurrency(totalTransactions > 0 ? totalRevenue / totalTransactions : 0)}
+                        </div>
+                        <p className="text-xs text-muted-foreground">
+                            Per transaksi
+                        </p>
+                    </CardContent>
+                </Card>
             </div>
 
             {/* Charts */}
             <div className="grid gap-4 md:grid-cols-2">
-                {/* Monthly Revenue Chart */}
+                {/* Monthly Revenue vs Margin Chart */}
                 <Card>
                     <CardHeader>
-                        <CardTitle>Pendapatan Bulanan</CardTitle>
+                        <CardTitle>Pendapatan & Margin Bulanan</CardTitle>
                         <CardDescription>6 bulan terakhir</CardDescription>
                     </CardHeader>
                     <CardContent>
@@ -260,6 +335,13 @@ export default function DashboardPage() {
                                     stroke="#8884d8" 
                                     strokeWidth={2}
                                     name="Pendapatan"
+                                />
+                                <Line 
+                                    type="monotone" 
+                                    dataKey="margin" 
+                                    stroke="#10b981" 
+                                    strokeWidth={2}
+                                    name="Margin"
                                 />
                             </LineChart>
                         </ResponsiveContainer>
@@ -345,28 +427,38 @@ export default function DashboardPage() {
                     <CardContent>
                         {recentTransactions.length > 0 ? (
                             <div className="space-y-4">
-                                {recentTransactions.map((transaction) => (
-                                    <div key={transaction.id} className="flex items-center justify-between">
-                                        <div className="flex items-center gap-3">
-                                            <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
-                                                <ShoppingCart className="h-5 w-5 text-primary" />
+                                {recentTransactions.map((transaction) => {
+                                    const transactionMargin = transaction.total - (transaction.total_purchase_price || 0)
+                                    const transactionMarginPercent = transaction.total > 0 
+                                        ? (transactionMargin / transaction.total) * 100 
+                                        : 0
+                                    
+                                    return (
+                                        <div key={transaction.id} className="flex items-center justify-between">
+                                            <div className="flex items-center gap-3">
+                                                <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
+                                                    <ShoppingCart className="h-5 w-5 text-primary" />
+                                                </div>
+                                                <div>
+                                                    <p className="text-sm font-medium">
+                                                        {transaction.payment_method.toUpperCase()}
+                                                    </p>
+                                                    <p className="text-xs text-muted-foreground">
+                                                        {formatDate(transaction.created_at)}
+                                                    </p>
+                                                </div>
                                             </div>
-                                            <div>
-                                                <p className="text-sm font-medium">
-                                                    {transaction.payment_method.toUpperCase()}
+                                            <div className="text-right">
+                                                <p className="text-sm font-semibold">
+                                                    {formatCurrency(transaction.total)}
                                                 </p>
-                                                <p className="text-xs text-muted-foreground">
-                                                    {formatDate(transaction.created_at)}
+                                                <p className="text-xs text-green-600 font-medium">
+                                                    +{formatCurrency(transactionMargin)} ({transactionMarginPercent.toFixed(1)}%)
                                                 </p>
                                             </div>
                                         </div>
-                                        <div className="text-right">
-                                            <p className="text-sm font-semibold">
-                                                {formatCurrency(transaction.total)}
-                                            </p>
-                                        </div>
-                                    </div>
-                                ))}
+                                    )
+                                })}
                             </div>
                         ) : (
                             <div className="flex items-center justify-center h-[300px]">

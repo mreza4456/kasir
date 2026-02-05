@@ -132,6 +132,17 @@ export function ProductDialog({
                         />
                     </div>
                     <div className="space-y-2">
+                        <Label htmlFor="purchase_price">Harga Pabrik</Label>
+                        <Input
+                            id="purchase_price"
+                            name="purchase_price"
+                            type="number"
+                            step="0.01"
+                            defaultValue={product?.purchase_price}
+                            required
+                        />
+                    </div>
+                    <div className="space-y-2">
                         <Label htmlFor="stock">Stok</Label>
                         <Input
                             id="stock"

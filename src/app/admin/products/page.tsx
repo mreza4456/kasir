@@ -48,10 +48,11 @@ export default function ProductsPage() {
         setShowProductDialog(true)
     }
 
-   const filteredProducts = products.filter(product =>
-  product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-  product.categories?.name.toLowerCase().includes(searchQuery.toLowerCase())
-)
+    const filteredProducts = products.filter(product =>
+        product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        product.categories?.name.toLowerCase().includes(searchQuery.toLowerCase())
+    )
+    
     const handleProductDialogSuccess = () => {
         loadProducts()
     }
@@ -67,10 +68,19 @@ export default function ProductsPage() {
         }
     }
 
+    const formatCurrency = (value: number) => {
+        return new Intl.NumberFormat('id-ID', {
+            style: 'currency',
+            currency: 'IDR',
+            minimumFractionDigits: 0
+        }).format(value || 0)
+    }
+
     return (
-        <div className="space-y-4">
-            <div className="flex justify-between items-center gap-4">
-                <div className="relative flex-1 max-w-sm">
+        <div className="space-y-4 p-4 md:p-6">
+            {/* Header Section */}
+            <div className="flex flex-col sm:flex-row justify-between items-stretch sm:items-center gap-3">
+                <div className="relative w-full sm:flex-1 sm:max-w-sm">
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                     <Input
                         placeholder="Cari produk atau kategori..."
@@ -79,7 +89,7 @@ export default function ProductsPage() {
                         className="pl-9"
                     />
                 </div>
-                <Button onClick={handleAddProduct}>
+                <Button onClick={handleAddProduct} className="w-full sm:w-auto">
                     <Plus className="mr-2 h-4 w-4" />
                     Tambah Produk
                 </Button>
@@ -92,13 +102,15 @@ export default function ProductsPage() {
                 onSuccess={handleProductDialogSuccess}
             />
 
-            <div className="border rounded-lg">
+            {/* Desktop Table View */}
+            <div className="hidden lg:block border rounded-lg">
                 <Table>
                     <TableHeader>
                         <TableRow>
                             <TableHead>Nama Produk</TableHead>
                             <TableHead>Kategori</TableHead>
-                            <TableHead>Harga</TableHead>
+                            <TableHead>Harga Jual</TableHead>
+                            <TableHead>Harga Beli</TableHead>
                             <TableHead>Stok</TableHead>
                             <TableHead className="text-right">Aksi</TableHead>
                         </TableRow>
@@ -106,7 +118,7 @@ export default function ProductsPage() {
                     <TableBody>
                         {loading ? (
                             <TableRow>
-                                <TableCell colSpan={5} className="text-center py-12">
+                                <TableCell colSpan={6} className="text-center py-12">
                                     <div className="flex flex-col items-center gap-2">
                                         <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
                                         <p className="text-sm text-muted-foreground">Memuat produk...</p>
@@ -115,7 +127,7 @@ export default function ProductsPage() {
                             </TableRow>
                         ) : filteredProducts.length === 0 ? (
                             <TableRow>
-                                <TableCell colSpan={5} className="text-center py-12">
+                                <TableCell colSpan={6} className="text-center py-12">
                                     <p className="text-muted-foreground">
                                         {searchQuery ? 'Produk tidak ditemukan' : 'Belum ada produk'}
                                     </p>
@@ -126,13 +138,8 @@ export default function ProductsPage() {
                                 <TableRow key={product.id}>
                                     <TableCell className="font-medium">{product.name}</TableCell>
                                     <TableCell>{product.categories?.name || 'Tidak ada kategori'}</TableCell>
-                                    <TableCell>
-                                        {new Intl.NumberFormat('id-ID', {
-                                            style: 'currency',
-                                            currency: 'IDR',
-                                            minimumFractionDigits: 0
-                                        }).format(product.price || 0)}
-                                    </TableCell>
+                                    <TableCell>{formatCurrency(product.price)}</TableCell>
+                                    <TableCell>{formatCurrency(product.purchase_price)}</TableCell>
                                     <TableCell>
                                         <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
                                             (product.stock || 0) > 10 
@@ -169,6 +176,76 @@ export default function ProductsPage() {
                         )}
                     </TableBody>
                 </Table>
+            </div>
+
+            {/* Mobile Card View */}
+            <div className="lg:hidden space-y-3">
+                {loading ? (
+                    <div className="flex flex-col items-center justify-center py-12 border rounded-lg">
+                        <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+                        <p className="text-sm text-muted-foreground mt-2">Memuat produk...</p>
+                    </div>
+                ) : filteredProducts.length === 0 ? (
+                    <div className="text-center py-12 border rounded-lg">
+                        <p className="text-muted-foreground">
+                            {searchQuery ? 'Produk tidak ditemukan' : 'Belum ada produk'}
+                        </p>
+                    </div>
+                ) : (
+                    filteredProducts.map((product) => (
+                        <div key={product.id} className="border rounded-lg p-4 space-y-3">
+                            <div className="flex justify-between items-start gap-2">
+                                <div className="flex-1 min-w-0">
+                                    <h3 className="font-medium text-base truncate">{product.name}</h3>
+                                    <p className="text-sm text-muted-foreground">
+                                        {product.categories?.name || 'Tidak ada kategori'}
+                                    </p>
+                                </div>
+                                <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium whitespace-nowrap ${
+                                    (product.stock || 0) > 10 
+                                        ? 'bg-green-100 text-green-800' 
+                                        : (product.stock || 0) > 0 
+                                        ? 'bg-yellow-100 text-yellow-800' 
+                                        : 'bg-red-100 text-red-800'
+                                }`}>
+                                    Stok: {product.stock || 0}
+                                </span>
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-2 text-sm">
+                                <div>
+                                    <p className="text-muted-foreground text-xs">Harga Jual</p>
+                                    <p className="font-medium">{formatCurrency(product.price)}</p>
+                                </div>
+                                <div>
+                                    <p className="text-muted-foreground text-xs">Harga Beli</p>
+                                    <p className="font-medium">{formatCurrency(product.purchase_price)}</p>
+                                </div>
+                            </div>
+
+                            <div className="flex gap-2 pt-2 border-t">
+                                <Button
+                                    size="sm"
+                                    variant="outline"
+                                    className="flex-1"
+                                    onClick={() => handleEditProduct(product)}
+                                >
+                                    <Edit className="mr-2 h-4 w-4" />
+                                    Edit
+                                </Button>
+                                <Button
+                                    size="sm"
+                                    variant="outline"
+                                    className="flex-1 text-destructive hover:text-destructive"
+                                    onClick={() => handleDeleteProduct(product.id)}
+                                >
+                                    <Trash2 className="mr-2 h-4 w-4" />
+                                    Hapus
+                                </Button>
+                            </div>
+                        </div>
+                    ))
+                )}
             </div>
         </div>
     )

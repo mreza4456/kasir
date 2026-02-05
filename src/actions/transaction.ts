@@ -9,12 +9,13 @@ export async function createTransaction(
     paymentMethod: 'cash' | 'card' | 'qris'
 ) {
     const total = cartItems.reduce((sum, item) => sum + (item.product.price * item.quantity), 0)
+    const total_purchase_price = cartItems.reduce((sum, item) => sum + (item.product.purchase_price * item.quantity), 0)
     const user = await getAuthenticatedUser();
     const supabase = await createClient();
     // Create transaction
     const { data: transaction, error: transactionError } = await supabase
         .from('transactions')
-        .insert([{ total, payment_method: paymentMethod }])
+        .insert([{ total, total_purchase_price, payment_method: paymentMethod }])
         .select()
         .single()
 
@@ -28,7 +29,8 @@ export async function createTransaction(
         transaction_id: transaction.id,
         product_id: item.product.id,
         quantity: item.quantity,
-        price: item.product.price
+        price: item.product.price,
+        purchase_price: item.product.purchase_price
     }))
 
     const { error: itemsError } = await supabase

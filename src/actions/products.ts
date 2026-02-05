@@ -30,13 +30,14 @@ export async function getProducts(): Promise<Product[]> {
 export async function createProduct(formData: FormData) {
     const name = formData.get('name') as string
     const price = parseFloat(formData.get('price') as string)
+    const purchase_price = parseFloat(formData.get('purchase_price') as string)
     const stock = parseInt(formData.get('stock') as string)
     const categories_id = formData.get('categories_id') as string
     const user = await getAuthenticatedUser();
     const supabase = await createClient();
     const { error } = await supabase
         .from('products')
-        .insert([{ name, price, stock, categories_id }])
+        .insert([{ name , price, purchase_price, stock, categories_id }])
 
     if (error) {
         console.error('Error creating product:', error)
@@ -50,13 +51,14 @@ export async function createProduct(formData: FormData) {
 export async function updateProduct(id: string, formData: FormData) {
     const name = formData.get('name') as string
     const price = parseFloat(formData.get('price') as string)
+    const purchase_price = parseFloat(formData.get('purchase_price') as string)
     const stock = parseInt(formData.get('stock') as string)
     const categories_id = formData.get('categories_id') as string
     const user = await getAuthenticatedUser();
     const supabase = await createClient();
     const { error } = await supabase
         .from('products')
-        .update({ name, price, stock, categories_id })
+        .update({ name, price, purchase_price, stock, categories_id })
         .eq('id', id)
 
     if (error) {
