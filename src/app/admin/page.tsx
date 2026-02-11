@@ -235,7 +235,7 @@ export default function DashboardPage() {
         </Card>
 
         {/* Total Products */}
-        <Card className="border border-blue-200 shadow-md hover:shadow-xl transition-shadow bg-white/80 backdrop-blur">
+        <Card className="border  border-blue-200 shadow-md hover:shadow-xl transition-shadow bg-white/80 backdrop-blur">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium text-slate-700">Total Produk</CardTitle>
             <div className="p-2 bg-blue-100 rounded-lg">
@@ -249,7 +249,7 @@ export default function DashboardPage() {
         </Card>
 
         {/* Low Stock */}
-        <Card className="border border-orange-200 shadow-md hover:shadow-xl transition-shadow bg-white/80 backdrop-blur">
+        <Card className="border col-span-2 border-orange-200 shadow-md hover:shadow-xl transition-shadow bg-white/80 backdrop-blur">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium text-slate-700">Stok Rendah</CardTitle>
             <div className="p-2 bg-orange-100 rounded-lg">
@@ -263,7 +263,7 @@ export default function DashboardPage() {
         </Card>
 
         {/* Average Transaction */}
-        <Card className="border border-emerald-200 shadow-md hover:shadow-xl transition-shadow bg-white/80 backdrop-blur">
+        {/* <Card className="border border-emerald-200 shadow-md hover:shadow-xl transition-shadow bg-white/80 backdrop-blur">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium text-slate-700">Rata-rata Transaksi</CardTitle>
             <div className="p-2 bg-emerald-100 rounded-lg">
@@ -276,7 +276,7 @@ export default function DashboardPage() {
             </div>
             <p className="text-xs text-slate-500 mt-1">Per transaksi</p>
           </CardContent>
-        </Card>
+        </Card> */}
       </div>
 
       {/* Charts */}

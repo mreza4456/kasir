@@ -15,8 +15,11 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Kasir App",
-  description: "Kasir App ",
+  title: "Gemilang Abadi",
+  description: "Gemilang Abadi ",
+  icons: {
+    icon: "/icon.png",
+  },
 };
 
 export default function RootLayout({

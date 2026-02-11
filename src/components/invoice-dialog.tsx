@@ -104,7 +104,7 @@ export function InvoiceDialog({
                 <div ref={invoiceRef} className="bg-white p-12">
                     {/* Header */}
                     <div className="flex justify-between items-start mb-8">
-                        <img src="logo-gemilangnew.png" className="w-25 h-25" alt="" />
+                        <img src="/logo-gemilangnew.png" className="w-25 h-25" alt="" />
                         <div className="text-right">
                             <h1 className="text-4xl font-serif mb-2">Invoice</h1>
                             <p className="text-sm text-gray-600">Invoice No. {transactionId.substring(0, 5)}</p>

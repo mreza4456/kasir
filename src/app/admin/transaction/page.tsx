@@ -1,3 +1,4 @@
+// app/transactions/page.tsx - Dengan Invoice Integration
 "use client";
 import { getTransactions, getTransactionDetails } from "@/actions/transaction"
 import { Button } from "@/components/ui/button";
@@ -25,9 +26,10 @@ import {
     SelectValue,
 } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { Transaction } from "@/interface"
-import { Eye, Search, Download, ChevronLeft, ChevronRight, Calendar } from "lucide-react";
+import { Transaction, CartItem, Product } from "@/interface"
+import { Eye, Search, Download, ChevronLeft, ChevronRight, Calendar, Receipt } from "lucide-react";
 import { useEffect, useState } from "react"
+import { InvoiceDialog } from "@/components/invoice-dialog"
 
 interface TransactionItem {
     id: string;
@@ -35,10 +37,13 @@ interface TransactionItem {
     product_id: string;
     quantity: number;
     price: number;
+    purchase_price: number;
     products: {
         id: string;
         name: string;
         category: string;
+        price: number;
+        purchase_price: number;
     };
 }
 
@@ -50,6 +55,11 @@ export default function TransactionsPage() {
     const [selectedTransaction, setSelectedTransaction] = useState<Transaction | null>(null)
     const [transactionItems, setTransactionItems] = useState<TransactionItem[]>([])
     const [loadingDetails, setLoadingDetails] = useState(false)
+    
+    // Invoice states
+    const [showInvoice, setShowInvoice] = useState(false)
+    const [invoiceTransaction, setInvoiceTransaction] = useState<Transaction | null>(null)
+    const [invoiceItems, setInvoiceItems] = useState<CartItem[]>([])
     
     // Pagination states
     const [currentPage, setCurrentPage] = useState(1)
@@ -90,13 +100,53 @@ export default function TransactionsPage() {
         }
     }
 
+    // Fungsi baru untuk menampilkan invoice
+    const handleShowInvoice = async (transaction: Transaction) => {
+        setInvoiceTransaction(transaction)
+        setLoadingDetails(true)
+        
+        try {
+            const items = await getTransactionDetails(transaction.id)
+            
+            // Convert TransactionItem[] ke CartItem[]
+            const cartItems: CartItem[] = (items as TransactionItem[]).map(item => {
+                const product: Product = {
+                    id: item.products.id,
+                    name: item.products.name,
+                    price: item.price,
+                    purchase_price: item.purchase_price || item.products.purchase_price,
+                    stock: 0, // tidak diperlukan untuk invoice
+                    created_at: new Date().toISOString(),
+                    categories_id: '', // default empty string karena tidak ada di data
+                    categories: {
+                        id: '',
+                        name: item.products.category,
+                        created_at: new Date().toISOString()
+                    }
+                };
+
+                return {
+                    product,
+                    quantity: item.quantity
+                };
+            });
+            
+            setInvoiceItems(cartItems)
+            setShowInvoice(true)
+        } catch (error) {
+            console.error('Failed to load invoice data:', error)
+            alert('Gagal memuat data invoice')
+        } finally {
+            setLoadingDetails(false)
+        }
+    }
+
     const filteredTransactions = transactions.filter(transaction => {
         const searchLower = searchQuery.toLowerCase()
         const matchesSearch = 
             transaction.id.toLowerCase().includes(searchLower) ||
             transaction.payment_method.toLowerCase().includes(searchLower)
         
-        // Date filtering
         const transactionDate = new Date(transaction.created_at)
         const matchesStartDate = !startDate || transactionDate >= new Date(startDate)
         const matchesEndDate = !endDate || transactionDate <= new Date(endDate + 'T23:59:59')
@@ -104,13 +154,11 @@ export default function TransactionsPage() {
         return matchesSearch && matchesStartDate && matchesEndDate
     })
 
-    // Pagination calculations
     const totalPages = Math.ceil(filteredTransactions.length / itemsPerPage)
     const startIndex = (currentPage - 1) * itemsPerPage
     const endIndex = startIndex + itemsPerPage
     const paginatedTransactions = filteredTransactions.slice(startIndex, endIndex)
 
-    // Reset to page 1 when filters change
     useEffect(() => {
         setCurrentPage(1)
     }, [searchQuery, startDate, endDate, itemsPerPage])
@@ -141,7 +189,6 @@ export default function TransactionsPage() {
     }
 
     const handleExport = () => {
-        // TODO: Implement export functionality
         console.log('Exporting transactions...')
     }
 
@@ -163,7 +210,6 @@ export default function TransactionsPage() {
 
             {/* Filters Section */}
             <div className="space-y-3">
-                {/* Search Bar */}
                 <div className="relative w-full">
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                     <Input
@@ -174,7 +220,6 @@ export default function TransactionsPage() {
                     />
                 </div>
 
-                {/* Date Filters */}
                 <div className="flex flex-col sm:flex-row gap-2">
                     <div className="flex-1 space-y-1">
                         <label className="text-xs text-muted-foreground flex items-center gap-1">
@@ -269,14 +314,24 @@ export default function TransactionsPage() {
                                         {formatCurrency(transaction.total - transaction.total_purchase_price)}
                                     </TableCell>
                                     <TableCell className="text-right">
-                                        <Button
-                                            size="sm"
-                                            variant="ghost"
-                                            onClick={() => handleViewDetails(transaction)}
-                                        >
-                                            <Eye className="h-4 w-4 mr-2" />
-                                            Detail
-                                        </Button>
+                                        <div className="flex gap-1 justify-end">
+                                            <Button
+                                                size="sm"
+                                                variant="ghost"
+                                                onClick={() => handleViewDetails(transaction)}
+                                            >
+                                                <Eye className="h-4 w-4 mr-2" />
+                                                Detail
+                                            </Button>
+                                            <Button
+                                                size="sm"
+                                                variant="outline"
+                                                onClick={() => handleShowInvoice(transaction)}
+                                            >
+                                                <Receipt className="h-4 w-4 mr-2" />
+                                                Invoice
+                                            </Button>
+                                        </div>
                                     </TableCell>
                                 </TableRow>
                             ))
@@ -328,15 +383,26 @@ export default function TransactionsPage() {
                                 </div>
                             </div>
 
-                            <Button
-                                size="sm"
-                                variant="outline"
-                                className="w-full"
-                                onClick={() => handleViewDetails(transaction)}
-                            >
-                                <Eye className="h-4 w-4 mr-2" />
-                                Lihat Detail
-                            </Button>
+                            <div className="flex gap-2">
+                                <Button
+                                    size="sm"
+                                    variant="outline"
+                                    className="flex-1"
+                                    onClick={() => handleViewDetails(transaction)}
+                                >
+                                    <Eye className="h-4 w-4 mr-2" />
+                                    Detail
+                                </Button>
+                                <Button
+                                    size="sm"
+                                    variant="default"
+                                    className="flex-1"
+                                    onClick={() => handleShowInvoice(transaction)}
+                                >
+                                    <Receipt className="h-4 w-4 mr-2" />
+                                    Invoice
+                                </Button>
+                            </div>
                         </div>
                     ))
                 )}
@@ -402,7 +468,6 @@ export default function TransactionsPage() {
 
                         {selectedTransaction && (
                             <div className="space-y-4">
-                                {/* Transaction Info */}
                                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 p-4 bg-muted rounded-lg">
                                     <div>
                                         <p className="text-xs text-muted-foreground">Tanggal & Waktu</p>
@@ -434,7 +499,6 @@ export default function TransactionsPage() {
                                     </div>
                                 </div>
 
-                                {/* Items - Desktop Table */}
                                 <div className="hidden md:block">
                                     <h3 className="font-semibold mb-3">Item Transaksi</h3>
                                     {loadingDetails ? (
@@ -477,7 +541,6 @@ export default function TransactionsPage() {
                                     )}
                                 </div>
 
-                                {/* Items - Mobile Cards */}
                                 <div className="md:hidden">
                                     <h3 className="font-semibold mb-3">Item Transaksi</h3>
                                     {loadingDetails ? (
@@ -511,6 +574,21 @@ export default function TransactionsPage() {
                     </div>
                 </DialogContent>
             </Dialog>
+
+            {/* Invoice Dialog */}
+            {invoiceTransaction && (
+                <InvoiceDialog
+                    open={showInvoice}
+                    onOpenChange={setShowInvoice}
+                    items={invoiceItems}
+                    transactionId={invoiceTransaction.id}
+                    paymentMethod={invoiceTransaction.payment_method}
+                    total={invoiceTransaction.total - (invoiceTransaction.postage || 0)}
+                    paymentAmount={0} // Untuk transaksi lama, kita tidak punya data ini
+                    change={0}
+                    postage={invoiceTransaction.postage || 0}
+                />
+            )}
         </div>
     )
 }
