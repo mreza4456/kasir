@@ -6,7 +6,8 @@ import { revalidatePath } from 'next/cache'
 
 export async function createTransaction(
     cartItems: CartItem[],
-    paymentMethod: 'cash' | 'card' | 'qris'
+    paymentMethod: 'cash' | 'card' | 'qris',
+    postage: number = 0
 ) {
     const total = cartItems.reduce((sum, item) => sum + (item.product.price * item.quantity), 0)
     const total_purchase_price = cartItems.reduce((sum, item) => sum + (item.product.purchase_price * item.quantity), 0)
@@ -15,7 +16,7 @@ export async function createTransaction(
     // Create transaction
     const { data: transaction, error: transactionError } = await supabase
         .from('transactions')
-        .insert([{ total, total_purchase_price, payment_method: paymentMethod }])
+        .insert([{ postage, total, total_purchase_price, payment_method: paymentMethod }])
         .select()
         .single()
 

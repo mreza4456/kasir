@@ -124,9 +124,8 @@ export default function CashierPage() {
       <header className="bg-white border-b sticky top-0 z-10">
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between ">
-            <div className="flex items-center gap-2">
-              <Package className="h-8 w-8 text-primary" />
-              <h1 className="text-2xl font-bold">Aplikasi Kasir</h1>
+            <div className="flex items-center">
+             <img className='h-10' src="/logo-horizontal.png" alt="" />
             </div>
             <button
               onClick={handleLogout}
@@ -151,12 +150,12 @@ export default function CashierPage() {
           {/* Products Section */}
           <div className="lg:col-span-2 space-y-4">
             <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Search className="absolute right-5 top-1/2 transform -translate-y-1/2 h-6 w-6 text-muted-foreground " />
               <Input
                 placeholder="Cari produk atau kategori..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-10"
+                className="pl-10 p-7"
               />
             </div>
 
@@ -171,28 +170,11 @@ export default function CashierPage() {
                 </p>
               </div>
             ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+              <div className="grid grid-cols-2 md:grid-cols-2 xl:grid-cols-3 gap-4">
                 {filteredProducts.map((product) => (
                   <div key={product.id} className="relative group">
                     <ProductCard product={product} onAddToCart={addToCart} />
-                    <div className="absolute top-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                      <Button
-                        size="icon"
-                        variant="secondary"
-                        className="h-8 w-8"
-                        onClick={() => handleEditProduct(product)}
-                      >
-                        <Edit className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        size="icon"
-                        variant="destructive"
-                        className="h-8 w-8"
-                        onClick={() => handleDeleteProduct(product.id)}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </div>
+                   
                   </div>
                 ))}
               </div>

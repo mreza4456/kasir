@@ -79,24 +79,28 @@ const menuItems = [
 ]
 
 // Mobile Navigation Component
-function MobileNav({ pathname, onLogout, isLoggingOut }: { 
+function MobileNav({ pathname, onLogout, isLoggingOut }: {
     pathname: string | null
     onLogout: () => void
-    isLoggingOut: boolean 
+    isLoggingOut: boolean
 }) {
     const [open, setOpen] = React.useState(false)
 
     return (
         <Sheet open={open} onOpenChange={setOpen}>
             <SheetTrigger asChild>
-                <Button
-                    variant="ghost"
-                    size="icon"
-                    className="lg:hidden fixed top-4 left-4 z-50 h-10 w-10"
-                >
-                    <Menu className="h-5 w-5" />
-                    <span className="sr-only">Toggle menu</span>
-                </Button>
+                <div className="flex w-full bg-secondary justify-between fixed top-0 left-0 z-40 h-13 items-center px-4 lg:hidden">
+
+                    <Button
+                        variant="ghost"
+                        size="icon"
+                        className="lg:hidden  top-4 left-4 z-50 "
+                    >
+                        <Menu className="h-15 w-15" />
+                        <span className="sr-only">Toggle menu</span>
+                    </Button>
+                    <img src="/logo-horizontal.png" alt="Logo" className="ml-2 h-8 w-auto" />
+                </div>
             </SheetTrigger>
             <SheetContent side="left" className="w-[280px] p-0">
                 <div className="flex h-full flex-col">
@@ -173,10 +177,10 @@ function MobileNav({ pathname, onLogout, isLoggingOut }: {
 }
 
 // Desktop Sidebar Component
-function DesktopSidebar({ pathname, onLogout, isLoggingOut }: { 
+function DesktopSidebar({ pathname, onLogout, isLoggingOut }: {
     pathname: string | null
     onLogout: () => void
-    isLoggingOut: boolean 
+    isLoggingOut: boolean
 }) {
     return (
         <Sidebar className="hidden lg:flex">
@@ -252,7 +256,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
     const pathname = usePathname()
     const isAdminLayout = pathname?.startsWith("/admin") && pathname !== "/admin/"
     const [isLoggingOut, setIsLoggingOut] = React.useState(false)
-    
+
     const handleLogout = async () => {
         try {
             setIsLoggingOut(true)
@@ -268,27 +272,28 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
         return (
             <>
                 {/* Mobile Navigation */}
-                <MobileNav 
-                    pathname={pathname} 
-                    onLogout={handleLogout} 
-                    isLoggingOut={isLoggingOut} 
+                <MobileNav
+                    pathname={pathname}
+                    onLogout={handleLogout}
+                    isLoggingOut={isLoggingOut}
                 />
 
                 {/* Desktop Layout */}
                 <SidebarProvider>
                     <div className="flex min-h-screen w-full">
-                        <DesktopSidebar 
-                            pathname={pathname} 
-                            onLogout={handleLogout} 
-                            isLoggingOut={isLoggingOut} 
+                        <DesktopSidebar
+                            pathname={pathname}
+                            onLogout={handleLogout}
+                            isLoggingOut={isLoggingOut}
                         />
 
                         <main className="flex-1 w-full lg:w-auto">
                             {/* Mobile Header Spacer */}
                             <div className="h-16 lg:hidden" />
-                            
+
                             {/* Content */}
                             <div className="container mx-auto p-4 md:p-6">
+                               
                                 {children}
                             </div>
                         </main>

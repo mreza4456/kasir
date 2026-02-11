@@ -15,6 +15,7 @@ export interface Transaction {
   total: number;
   total_purchase_price:number;
   payment_method: 'cash' | 'card' | 'qris'
+  postage: number;
   created_at: string
 }
 

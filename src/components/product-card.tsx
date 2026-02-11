@@ -18,10 +18,10 @@ export function ProductCard({ product, onAddToCart }: ProductCardProps) {
     <Card className={isOutOfStock ? 'opacity-50' : ''}>
       <CardContent className="pt-6">
         <div className="space-y-2">
-          <h3 className="font-semibold text-lg">{product.name}</h3>
+          <h3 className="font-semibold text-lg ">{product.name}</h3>
           <p className="text-sm text-muted-foreground">{product.categories?.name || 'Tanpa Kategori'}</p>
           <div className="flex items-center justify-between">
-            <p className="text-2xl font-bold text-primary">
+            <p className="text-2xl font-bold text-slate-900">
               {formatCurrency(product.price)}
             </p>
             <p className={`text-sm ${isOutOfStock ? 'text-destructive' : 'text-muted-foreground'}`}>
@@ -34,7 +34,7 @@ export function ProductCard({ product, onAddToCart }: ProductCardProps) {
         <Button
           onClick={() => onAddToCart(product)}
           disabled={isOutOfStock}
-          className="w-full"
+          className="w-full bg-[#19629f]"
         >
           <Plus className="mr-2 h-4 w-4" />
           {isOutOfStock ? 'Stok Habis' : 'Tambah ke Keranjang'}
